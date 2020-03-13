@@ -9,11 +9,11 @@ import re
 import threading
 import time
 
-#List of unique MAC address and list of MAC addresses match to vendor name
+# List of unique MAC address and list of MAC addresses match to vendor name
 clients = []
 vendors = []
 
-# Iterates through  all 14 channels on 2.4ghz band in thread
+# Iterates through all 14 channels on 2.4ghz band in thread
 def channel_scanner(iface):
     n = 1
     while True:
@@ -56,19 +56,22 @@ def phase_2(pkt):
          print('{} -> {}'.format(pkt.addr2,pkt.addr1))
          print("Packet Size: {} bytes".format(len(packets_2[x])))
          tempSum += len(packets_2[x])
-     average = tempSum / len(packets_2)  # Creates an average
-     raspberry_pi()
+     # Creates an average
+     average = tempSum / len(packets_2)  
+     light_control()
 
 counter = off_counter = 0
-def raspberry_pi():
+def light_control():
     global classifyingAverage
     global counter
     global off_counter
+
     if average > classifyingAverage: 
         off_counter = 0
         print("Reported State: ON")
         print(' ')
         lifxlan.set_color_all_lights(YELLOW, rapid=True)
+
         if counter == 1:
             lifxlan.set_color_all_lights(ORANGE, rapid=True)
 
@@ -77,7 +80,6 @@ def raspberry_pi():
             print("The last {} states were reported as being on".format(counter))
             print(' ')
             lifxlan.set_color_all_lights(RED, rapid=True)
-
     else:
         counter = 0
         print("Reported State: OFF")
@@ -89,8 +91,10 @@ def raspberry_pi():
             lifxlan.set_color_all_lights(GREEN, rapid=True)
 
 classifyingAverage = 0
-def stopwatch(mac_address): #sniffs traffic for 1 minute to gather a baseline
+# sniffs traffic for 1 minute to gather a baseline
+def baseline(mac_address):
     global classifyingAverage
+
     sniff(iface=interface,filter="ether src " + str(mac_address).lower(), prn=pkt_callback, timeout=60)
     elements = numpy.array(packets)
     mean = numpy.mean(elements, axis=0)
@@ -117,16 +121,23 @@ def update_database():
 
 if __name__ == "__main__":
     global lifxlan
+
     lifxlan = LifxLAN()
     lifxlan.set_power_all_lights("on", rapid=True)
     lifxlan.set_color_all_lights(WHITE, rapid=True)
 
-    os.system('airmon-ng start wlan0') #starts monitor mode on wlan1
+    # starts monitor mode on wlan1
+    os.system('airmon-ng start wlan0') 
     os.system('clear')
-    os.system('iwconfig') #prints available interfaces
-    interface = raw_input("Welcome, please enter the interface you wish to scan on: ") #welcome message
 
-    thread = threading.Thread(target=channel_scanner, args=(interface, ), name="channel_scanner") #starts thread to scan all 2.4ghz channels
+    # prints available interfaces
+    os.system('iwconfig') 
+
+    # welcome message
+    interface = raw_input("Welcome, please enter the interface you wish to scan on: ") 
+
+    # starts thread to scan all 2.4ghz channels
+    thread = threading.Thread(target=channel_scanner, args=(interface, ), name="channel_scanner") 
     thread.daemon = True
     thread.start()
 
@@ -142,21 +153,28 @@ if __name__ == "__main__":
         print(' ')
         print('*If you are having trouble locating your device be sure that it is connected to a 2.4ghz wifi channel*')
         print(dash)
-        print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID")) #1st table with all nearby MAC addresses
+
+	# 1st table with all nearby MAC addresses
+        print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID")) 
         print(dash)
-        sniff(iface=interface, prn=phase_1, stop_filter= lambda x: keyboard.is_pressed('q')) #sniffs available MAC addresses until user types "q"
+
+	# sniffs available MAC addresses until user types "q"
+        sniff(iface=interface, prn=phase_1, stop_filter= lambda x: keyboard.is_pressed('q')) 
 
         os.system('clear')
         print(dash)
         print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID"))
         print(dash)
+
         count = 1
         for x,y in zip(clients, vendors):
             print("{:<6s}{:>13}{:>12s}".format(str(count), x, y))
             count += 1
         valid = False
         choice = ""
-        while not valid: #if user entered choice is not valid
+
+	# if user entered choice is not valid
+        while not valid: 
             choice = raw_input("Which device number do you want to sniff data from: ")
             choice = int(re.search(r'\d+', choice).group())
             choice -= 1
@@ -172,7 +190,9 @@ if __name__ == "__main__":
         print('For the next 1 minute, this device will be collecting data in order to create a baseline to classify the '
               'data being received')
         print(' ')
-        stopwatch(mac_address) # gathers data from given MAC address for 1 minute and calculates average by also removing outliers
+
+	# gathers data from given MAC address for 1 minute and calculates average by also removing outliers
+        baseline(mac_address) 
         os.system('clear')
         print('Data collection complete!')
         print('Scanning of data starting. To end this process enter "q":')
