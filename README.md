@@ -9,6 +9,6 @@ In the era of IoT devices, it is no secret that these devices collect user data.
 Spiderweb has only been tested on Linux-based systems. To run the program, follow the install procedure below. Note: a secondary network card is required for the program to work since a network card must be placed into monitored mode in order for the program to sniff packets.
 ```
 $ pip install -r requirements.txt
-$ sudo python wifispy.py
+$ sudo python Spiderweb.py
 ```
 Needs to be run with sudo because we're doing system-level stuff. For the some reason scapy won't work within a virtual environment.
