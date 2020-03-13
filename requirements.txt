@@ -1,0 +1,5 @@
+lifxlan==1.2.5
+scapy==2.3.3
+keyboard==0.13.3
+numpy==1.16.6
+python-cdb==0.35
