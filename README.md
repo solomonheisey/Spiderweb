@@ -11,4 +11,4 @@ Spiderweb has only been tested on Linux-based systems. To run the program, follo
 $ pip install -r requirements.txt
 $ sudo python Spiderweb.py
 ```
-Needs to be run with sudo because we're doing system-level stuff. For the some reason scapy won't work within a virtual environment.
+Needs to be run with sudo because we're doing system-level stuff. For some reason scapy won't work within a virtual environment.
