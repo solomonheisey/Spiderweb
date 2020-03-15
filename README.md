@@ -11,7 +11,7 @@ Spiderweb has only been tested on Linux-based systems. To run the program, follo
 
 Notes:
 * At least one network card is required. A secondary network card is preferred since one must be placed into monitored mode in order to sniff network packets.
-* As of now, this program only works on Lifx lightbulbs. All devices must me registered to a network and fully setup in order to use the full functionality of the program.
+* As of now, this program only works on Lifx lightbulbs. All devices must be registered to a network and fully setup in order to use the full functionality of the program.
 
 ```
 $ pip install -r requirements.txt
