@@ -7,7 +7,12 @@ In the era of IoT devices, it is no secret that these devices collect user data.
 
 ## Getting Started
 
-Spiderweb has only been tested on Linux-based systems. To run the program, follow the install procedure below. Note: a secondary network card is required for the program to work since a network card must be placed into monitored mode in order for the program to sniff packets.
+Spiderweb has only been tested on Linux-based systems. To run the program, follow the install procedure below.
+
+Notes:
+* At least one network card is required. A secondary network card is preferred since one must be placed into monitored mode in order to sniff network packets.
+* As of now, this program only works on Lifx lightbulbs. All devices must me registered to a network and fully setup in order to use the full functionality of the program.
+
 ```
 $ pip install -r requirements.txt
 $ sudo python Spiderweb.py
