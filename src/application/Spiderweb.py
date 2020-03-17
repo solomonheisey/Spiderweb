@@ -8,6 +8,7 @@ import keyboard
 import numpy
 import os
 import re
+import signal
 import sys
 import threading
 import time
@@ -165,9 +166,12 @@ if __name__ == "__main__":
     # prints available interfaces
     os.system('iwconfig') 
 
+    signal.signal(signal.SIGTSTP, signal.SIG_IGN)
+
     # welcome message
     interface = raw_input("Welcome, please enter the interface you wish to scan on: ") 
 
+    
     # starts thread to scan all 2.4ghz channels
     thread = threading.Thread(target=channel_scanner, args=(interface, ), name="channel_scanner") 
     thread.daemon = True
@@ -175,76 +179,82 @@ if __name__ == "__main__":
 
     update_database()
 
-    repeat = "Y"
-    while repeat == "Y":
-        lifxlan.set_power_all_lights("on", rapid=True)
-        lifxlan.set_color_all_lights(WHITE, rapid=True)
-        dash = '-' * 40
-        os.system('clear')
-        print('Once you have located the desired MAC address enter "q" to stop searching')
-        print(' ')
-        print('*If you are having trouble locating your device be sure that it is connected to a 2.4ghz wifi channel*')
-        print(dash)
+    try:
+        repeat = "Y"
+        while repeat == "Y":
+            lifxlan.set_power_all_lights("on", rapid=True)
+            lifxlan.set_color_all_lights(WHITE, rapid=True)
+            dash = '-' * 40
+            os.system('clear')
+            print('Once you have located the desired MAC address enter "q" to stop searching')
+            print(' ')
+            print('*If you are having trouble locating your device be sure that it is connected to a 2.4ghz wifi channel*')
+            print(dash)
 
-	# 1st table with all nearby MAC addresses
-        print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID")) 
-        print(dash)
+    	# 1st table with all nearby MAC addresses
+            print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID")) 
+            print(dash)
 
-	# sniffs available MAC addresses until user types "q"
-        sniff(iface=interface, prn=phase_1, stop_filter= lambda x: keyboard.is_pressed('q')) 
+    	# sniffs available MAC addresses until user types "q"
+            sniff(iface=interface, prn=phase_1, stop_filter= lambda x: keyboard.is_pressed('q')) 
 
-        os.system('clear')
-        print(dash)
-        print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID"))
-        print(dash)
+            os.system('clear')
+            print(dash)
+            print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID"))
+            print(dash)
 
-        count = 1
-        for x,y in zip(clients, vendors):
-            print("{:<6s}{:>13}{:>12s}".format(str(count), x, y))
-            count += 1
-        valid = False
-        choice = ""
+            count = 1
+            for x,y in zip(clients, vendors):
+                print("{:<6s}{:>13}{:>12s}".format(str(count), x, y))
+                count += 1
+            valid = False
+            choice = ""
 
-	# if user entered choice is not valid
-        while not valid: 
-            choice = raw_input("Which device number do you want to sniff data from: ")
-            choice = int(re.search(r'\d+', choice).group())
-            choice -= 1
-            if (choice >= (len(clients))) or (choice < 0):
-                print("Invalid choice")
-                print(" ")
-            else:
-                valid = True
+    	# if user entered choice is not valid
+            while not valid: 
+                choice = raw_input("Which device number do you want to sniff data from: ")
+                choice = int(re.search(r'\d+', choice).group())
+                choice -= 1
+                if (choice >= (len(clients))) or (choice < 0):
+                    print("Invalid choice")
+                    print(" ")
+                else:
+                    valid = True
 
-        mac_address = clients[choice]
-        os.system('clear')
+            mac_address = clients[choice]
+            os.system('clear')
 
-        print('For the next 1 minute, this device will be collecting data in order to create a baseline to classify the '
-              'data being received')
-        print(' ')
+            print('For the next 1 minute, this device will be collecting data in order to create a baseline to classify the '
+                  'data being received')
+            print(' ')
 
-	# gathers data from given MAC address for 1 minute and calculates average by also removing outliers
-        baseline(mac_address) 
-        os.system('clear')
-        print('Data collection complete!')
-        print('Scanning of data starting. To end this process enter "q":')
-        print(' ')
-        print(' ')
-        while not keyboard.is_pressed('q'):
-             cap = sniff(iface=interface, prn=phase_2, filter="ether dst " + str(mac_address).lower() + " or ether src " + str(mac_address).lower(), stop_filter=lambda x: keyboard.is_pressed('q'), timeout=.200)
+    	# gathers data from given MAC address for 1 minute and calculates average by also removing outliers
+            baseline(mac_address) 
+            os.system('clear')
+            print('Data collection complete!')
+            print('Scanning of data starting. To end this process enter "q":')
+            print(' ')
+            print(' ')
+            while not keyboard.is_pressed('q'):
+                 cap = sniff(iface=interface, prn=phase_2, filter="ether dst " + str(mac_address).lower() + " or ether src " + str(mac_address).lower(), stop_filter=lambda x: keyboard.is_pressed('q'), timeout=.200)
 
-        print(' ')
-        print('Process Complete.')
-        lifxlan.set_power_all_lights("off", rapid=True)
-        repeat = raw_input('Would you like to sniff the data from another device? [Y][N]: ')
-        
-        if(str(repeat).find('y') != -1) or (str(repeat).find('Y') != -1):
-            repeat = "Y"
+            print(' ')
+            print('Process Complete.')
+            lifxlan.set_power_all_lights("off", rapid=True)
+            repeat = raw_input('Would you like to sniff the data from another device? [Y][N]: ')
+            
+            if(str(repeat).find('y') != -1) or (str(repeat).find('Y') != -1):
+                repeat = "Y"
 
-        if (str(repeat).find('n') != -1) or (str(repeat).find('N') != -1):
-            repeat = "N"
+            if (str(repeat).find('n') != -1) or (str(repeat).find('N') != -1):
+                repeat = "N"
 
-        if repeat == "N":
-            thread.run = False
-            thread.join()
-            sys.exit()
+            if repeat == "N":
+                thread.run = False
+                thread.join()
+                sys.exit()
+    except KeyboardInterrupt:
+        thread.run = False
+        thread.join()
+        sys.exit()
+
