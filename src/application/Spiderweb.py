@@ -31,9 +31,9 @@ def phase_1(pkt):
                 upper_case = str(vendor_id).upper()
 
                 db_name = "mac_address_db"
-                db = cdb.cdbmake(db_name, db_name + ".tmp")
+                db = cdb.cdbmake("../lib/" + db_name, "../lib/"+ db_name + ".tmp")
                 del db
-                db = cdb.init(db_name)
+                db = cdb.init("../lib/" + db_name)
                 match = db.get(upper_case)
 
                 print("{:<6s}{:>13}{:>12s}".format(str(len(clients) + 1), pkt.addr2, match))
@@ -109,9 +109,9 @@ def baseline(mac_address):
 
 def update_database():
     fn = "mac_address_db"
-    db = cdb.cdbmake(fn, fn + ".tmp")
+    db = cdb.cdbmake("../lib/" + fn, "../lib/" + fn + ".tmp")
 
-    with open("mac.txt", "r") as file:
+    with open("../lib/mac.txt", "r") as file:
         for line in file:
             line = line.split()
             mac = line[0]
