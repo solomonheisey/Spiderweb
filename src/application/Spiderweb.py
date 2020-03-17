@@ -1,11 +1,14 @@
+from copy import copy
 from lifxlan import GREEN, LifxLAN, ORANGE, RED, WHITE, YELLOW
 from scapy.all import *
+from time import sleep, time
 
 import cdb
 import keyboard
 import numpy
 import os
 import re
+import sys
 import threading
 import time
 
@@ -15,8 +18,9 @@ vendors = []
 
 # Iterates through all 14 channels on 2.4ghz band in thread
 def channel_scanner(iface):
+    thread = threading.currentThread()
     n = 1
-    while True:
+    while getattr(thread, "run", True):
         time.sleep(0.25)
         os.system('iwconfig %s channel %d' % (iface, n))
         n += 1
@@ -71,15 +75,18 @@ def light_control():
         print("Reported State: ON")
         print(' ')
         lifxlan.set_color_all_lights(YELLOW, rapid=True)
+        breathe()
 
         if counter == 1:
             lifxlan.set_color_all_lights(ORANGE, rapid=True)
+            breathe()
 
         counter += 1
         if counter >= 2:
             print("The last {} states were reported as being on".format(counter))
             print(' ')
             lifxlan.set_color_all_lights(RED, rapid=True)
+            breathe()
     else:
         counter = 0
         print("Reported State: OFF")
@@ -89,7 +96,32 @@ def light_control():
             print('The last {} states were reported as being off'.format(off_counter))
             print(' ')
             lifxlan.set_color_all_lights(GREEN, rapid=True)
+            breathe()
 
+def breathe():
+    original_powers = lifxlan.get_power_all_lights()
+    original_colors = lifxlan.get_color_all_lights()
+
+    half_period_ms = 2500
+    duration_secs = counter
+    time_expired = False
+    
+    start_time = time.time()
+    while not time_expired:
+        for bulb in original_colors:
+            color = original_colors[bulb]
+            dim = list(copy.copy(color))
+            dim[2] = 1900
+            bulb.set_color(dim, half_period_ms, rapid=True)
+        sleep(half_period_ms/1000.0)
+        for bulb in original_colors:
+            color = original_colors[bulb]
+            bulb.set_color(color, half_period_ms, rapid=True)
+        sleep(half_period_ms/1000.0)
+
+        if time.time() - start_time > duration_secs:
+            time_expired = True
+               
 classifyingAverage = 0
 # sniffs traffic for 1 minute to gather a baseline
 def baseline(mac_address):
@@ -213,4 +245,6 @@ if __name__ == "__main__":
             repeat = "N"
 
         if repeat == "N":
+            thread.run = False
+            thread.join()
             sys.exit()
