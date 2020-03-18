@@ -10,7 +10,7 @@ In the era of IoT devices, it is no secret that these devices collect user data.
 Spiderweb has only been tested on Linux-based systems. To run the program, follow the install procedure below.
 
 Notes:
-* At least one network card is required. A secondary network card is preferred since one must be placed into monitored mode in order to sniff network packets.
+* At least two network cards are required. A secondary network card is mandatory since one is placed into monitored mode in order to sniff network packets and one is used to communicate with the Lifx lightbulbs.
 * As of now, this program only works on Lifx lightbulbs. All devices must be registered to a network and fully setup in order to use the full functionality of the program.
 
 ```
