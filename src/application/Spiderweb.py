@@ -75,19 +75,16 @@ def light_control():
         off_counter = 0
         print("Reported State: ON")
         print(' ')
-        lifxlan.set_color_all_lights(YELLOW, rapid=True)
-        breathe()
+        breathe(YELLOW)
 
         if counter == 1:
-            lifxlan.set_color_all_lights(ORANGE, rapid=True)
-            breathe()
+            breathe(ORANGE)
 
         counter += 1
         if counter >= 2:
             print("The last {} states were reported as being on".format(counter))
             print(' ')
-            lifxlan.set_color_all_lights(RED, rapid=True)
-            breathe()
+            breathe(RED)
     else:
         counter = 0
         print("Reported State: OFF")
@@ -96,29 +93,26 @@ def light_control():
         if off_counter >= 2:
             print('The last {} states were reported as being off'.format(off_counter))
             print(' ')
-            lifxlan.set_color_all_lights(GREEN, rapid=True)
-            breathe()
+            breathe(GREEN)
 
-def breathe():
-    original_powers = lifxlan.get_power_all_lights()
-    original_colors = lifxlan.get_color_all_lights()
-
+def breathe(color):
     half_period_ms = 2500
     duration_secs = counter
     time_expired = False
     
     start_time = time.time()
     while not time_expired:
-        for bulb in original_colors:
-            color = original_colors[bulb]
-            dim = list(copy.copy(color))
-            dim[2] = 1900
-            bulb.set_color(dim, half_period_ms, rapid=True)
+        dim = list(copy.copy(color))
+        dim[2] = 1900
+        lifxlan.set_color_all_lights(dim, half_period_ms, rapid=True)
+
         sleep(half_period_ms/1000.0)
-        for bulb in original_colors:
-            color = original_colors[bulb]
-            bulb.set_color(color, half_period_ms, rapid=True)
+
+        lifxlan.set_color_all_lights(color, half_period_ms, rapid=True)
+
         sleep(half_period_ms/1000.0)
+
+        lifxlan.set_color_all_lights(dim, half_period_ms, rapid=True)
 
         if time.time() - start_time > duration_secs:
             time_expired = True
@@ -157,9 +151,9 @@ if __name__ == "__main__":
 
     lifxlan = LifxLAN()
     lifxlan.set_power_all_lights("on", rapid=True)
-    lifxlan.set_color_all_lights(WHITE, rapid=True)
+    breathe(WHITE)
 
-    # starts monitor mode on wlan1
+    # starts monitor mode on wlan0
     os.system('airmon-ng start wlan0') 
     os.system('clear')
 
@@ -171,7 +165,6 @@ if __name__ == "__main__":
     # welcome message
     interface = raw_input("Welcome, please enter the interface you wish to scan on: ") 
 
-    
     # starts thread to scan all 2.4ghz channels
     thread = threading.Thread(target=channel_scanner, args=(interface, ), name="channel_scanner") 
     thread.daemon = True
@@ -182,8 +175,6 @@ if __name__ == "__main__":
     try:
         repeat = "Y"
         while repeat == "Y":
-            lifxlan.set_power_all_lights("on", rapid=True)
-            lifxlan.set_color_all_lights(WHITE, rapid=True)
             dash = '-' * 40
             os.system('clear')
             print('Once you have located the desired MAC address enter "q" to stop searching')
@@ -240,7 +231,6 @@ if __name__ == "__main__":
 
             print(' ')
             print('Process Complete.')
-            lifxlan.set_power_all_lights("off", rapid=True)
             repeat = raw_input('Would you like to sniff the data from another device? [Y][N]: ')
             
             if(str(repeat).find('y') != -1) or (str(repeat).find('Y') != -1):
@@ -252,9 +242,12 @@ if __name__ == "__main__":
             if repeat == "N":
                 thread.run = False
                 thread.join()
+                lifxlan.set_power_all_lights("off", rapid=True)
                 sys.exit()
+
     except KeyboardInterrupt:
         thread.run = False
         thread.join()
+        lifxlan.set_power_all_lights("off", rapid=True)
         sys.exit()
 
