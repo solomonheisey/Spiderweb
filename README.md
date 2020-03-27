@@ -14,7 +14,7 @@ Notes:
 * As of now, this program only works on Lifx lightbulbs. All devices must be registered to a network and fully setup in order to use the full functionality of the program.
 
 ```
-$ xargs sudo apt-get install <install/requirements.system
+$ xargs sudo apt-get install < install/requirements.system
 $ pip install -r install/requirements.txt
 $ sudo python src/application/Spiderweb.py
 ```
