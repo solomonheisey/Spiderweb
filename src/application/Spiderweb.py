@@ -12,6 +12,7 @@ import signal
 import sys
 import threading
 import time
+import tkinter as tk
 
 # List of unique MAC address and list of MAC addresses match to vendor name
 clients = []
