@@ -74,18 +74,17 @@ def light_control():
 
     if average > classifyingAverage: 
         off_counter = 0
+        counter += 1
         print("Reported State: ON")
         print(' ')
-        breathe(YELLOW)
 
         if counter == 1:
-            breathe(ORANGE)
-
-        counter += 1
+            breathe(medium_traffic)
+        
         if counter >= 2:
             print("The last {} states were reported as being on".format(counter))
             print(' ')
-            breathe(RED)
+            breathe(high_traffic)
     else:
         counter = 0
         print("Reported State: OFF")
@@ -94,7 +93,7 @@ def light_control():
         if off_counter >= 2:
             print('The last {} states were reported as being off'.format(off_counter))
             print(' ')
-            breathe(GREEN)
+            breathe(low_traffic)
 
 def breathe(color):
     half_period_ms = 2500
@@ -149,6 +148,13 @@ def update_database():
 
 if __name__ == "__main__":
     global lifxlan
+    global high_traffic
+    global medium_traffic
+    global low_traffic
+
+    high_traffic = RED
+    medium_traffic = ORANGE
+    low_traffic = GREEN
 
     lifxlan = LifxLAN()
     lifxlan.set_power_all_lights("on", rapid=True)
