@@ -116,7 +116,7 @@ def breathe(color):
 
         lifxlan.set_color_all_lights(dim, half_period_ms, rapid=True)
 
-        if time.time() - start_time > duration_secs:
+        if time.time() - start_time > half_period_ms/1000.0:
             time_expired = True
                
 classifyingAverage = 0
@@ -401,10 +401,10 @@ if __name__ == "__main__":
             b6.pack(side=TOP)
 
             b7 = tk.Button(root, text='Reset', command=reset, height=2, width=20)
-            b7.pack(side=BOTTOM)
+            b7.pack(side=BOTTOM, pady=(0,10))
 
             b4 = tk.Button(root, text='Confirm', command=confirm, height=2, width=20)
-            b4.pack(side=BOTTOM,pady=(0,10))
+            b4.pack(side=BOTTOM)
             root.mainloop()
 
             os.system('clear')
