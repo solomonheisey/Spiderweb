@@ -1,6 +1,8 @@
 from copy import copy
-from lifxlan import GREEN, LifxLAN, ORANGE, RED, WHITE, YELLOW
+from lifxlan import GREEN, LifxLAN, ORANGE, RED, WHITE
 from scapy.all import *
+from tkinter import *
+from tkinter import colorchooser
 from time import sleep, time
 
 import cdb
@@ -12,6 +14,9 @@ import signal
 import sys
 import threading
 import time
+import Tkinter
+import tkinter as tk
+
 
 # List of unique MAC address and list of MAC addresses match to vendor name
 clients = []
@@ -73,18 +78,17 @@ def light_control():
 
     if average > classifyingAverage: 
         off_counter = 0
+        counter += 1
         print("Reported State: ON")
         print(' ')
-        breathe(YELLOW)
 
         if counter == 1:
-            breathe(ORANGE)
-
-        counter += 1
+            breathe(medium_traffic)
+        
         if counter >= 2:
             print("The last {} states were reported as being on".format(counter))
             print(' ')
-            breathe(RED)
+            breathe(high_traffic)
     else:
         counter = 0
         print("Reported State: OFF")
@@ -93,13 +97,11 @@ def light_control():
         if off_counter >= 2:
             print('The last {} states were reported as being off'.format(off_counter))
             print(' ')
-            breathe(GREEN)
+            breathe(low_traffic)
 
 def breathe(color):
-    half_period_ms = 2500
     duration_secs = counter
     time_expired = False
-    
     start_time = time.time()
     while not time_expired:
         dim = list(copy.copy(color))
@@ -118,6 +120,7 @@ def breathe(color):
             time_expired = True
                
 classifyingAverage = 0
+
 # sniffs traffic for 1 minute to gather a baseline
 def baseline(mac_address):
     global classifyingAverage
@@ -146,8 +149,173 @@ def update_database():
             db.add(mac, vendor)
         db.finish()
 
+def rgb_to_hsv(red, green, blue):
+    red = float(red)
+    green = float(green)
+    blue = float(blue)
+    high = max(red, green, blue)
+    low = min(red, green, blue)
+    h, s, v = high, high, high
+
+    d = high - low
+    s = 0 if high == 0 else d / high
+
+    if high == low:
+        h = 0.0
+    else:
+        h = {
+            red: (green - blue) / d + (6 if green < blue else 0),
+            green: (blue - red) / d + 2,
+            blue: (red - green) / d + 4,
+        }[high]
+        h /= 6
+    return h, s, v
+
+def high():
+    global high_traffic
+    clr = colorchooser.askcolor(parent=root)
+    b1.configure(bg=clr[1])
+    temp =  str(clr[1]).lstrip('#')
+    RGB = tuple(int(temp[i:i+2], 16) for i in (0, 2, 4))
+    hsv = rgb_to_hsv(RGB[0] / 255.0, RGB[1] / 255.0, RGB[2] / 255.0)
+
+    bulbHSBK = [hsv[0] * 65535.0,hsv[1] * 65535.0,hsv[2] * 65535.0,3500]
+    gCycleHue = bulbHSBK[0]
+    gCycleSaturation = bulbHSBK[1]
+    gCycleBrightness = bulbHSBK[2]
+
+    high_traffic[0] = bulbHSBK[0]
+    high_traffic[1] = bulbHSBK[1]
+    high_traffic[2] = bulbHSBK[2]
+    high_traffic[3] = bulbHSBK[3]
+
+    lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
+
+def med():
+    global medium_traffic
+    clr = colorchooser.askcolor(parent=root)
+    b2.configure(bg=clr[1])
+    temp =  str(clr[1]).lstrip('#')
+    RGB = tuple(int(temp[i:i+2], 16) for i in (0, 2, 4))
+    hsv = rgb_to_hsv(RGB[0] / 255.0, RGB[1] / 255.0, RGB[2] / 255.0)
+
+    bulbHSBK = [hsv[0] * 65535.0,hsv[1] * 65535.0,hsv[2] * 65535.0,3500]
+    gCycleHue = bulbHSBK[0]
+    gCycleSaturation = bulbHSBK[1]
+    gCycleBrightness = bulbHSBK[2]
+    
+    medium_traffic[0] = bulbHSBK[0]
+    medium_traffic[1] = bulbHSBK[1]
+    medium_traffic[2] = bulbHSBK[2]
+    medium_traffic[3] = bulbHSBK[3]
+
+    lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
+
+def low():
+    global low_traffic
+    clr = colorchooser.askcolor(parent=root)
+    b3.configure(bg=clr[1])
+    temp =  str(clr[1]).lstrip('#')
+    RGB = tuple(int(temp[i:i+2], 16) for i in (0, 2, 4))
+    hsv = rgb_to_hsv(RGB[0] / 255.0, RGB[1] / 255.0, RGB[2] / 255.0)
+
+    bulbHSBK = [hsv[0] * 65535.0,hsv[1] * 65535.0,hsv[2] * 65535.0,3500]
+    gCycleHue = bulbHSBK[0]
+    gCycleSaturation = bulbHSBK[1]
+    gCycleBrightness = bulbHSBK[2]
+    
+    low_traffic[0] = bulbHSBK[0]
+    low_traffic[1] = bulbHSBK[1]
+    low_traffic[2] = bulbHSBK[2]
+    low_traffic[3] = bulbHSBK[3]
+
+    lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
+
+def confirm():
+    breathe(WHITE)
+    root.destroy()
+
+def scale(v):
+    global variable 
+    variable = v
+
+def pulse_scale(v):
+    global pulse_variable 
+    pulse_variable = v
+
+def set_brightness():
+    val = scale.get()
+    WHITE[2] = val
+    low_traffic[2] = val
+    medium_traffic[2] = val
+    high_traffic[2] = val
+    brightnessWindow.destroy()  
+    lifxlan.set_color_all_lights(WHITE, duration=0, rapid=False)
+
+def set_pulse():
+    global half_period_ms
+    val = pulse_scale.get()
+    half_period_ms = val
+    pulse_delay_window.destroy()
+    breathe(WHITE)
+
+def pulse_delay():
+    global pulse_delay_window
+    global pulse_scale
+
+    pulse_delay_window = tk.Toplevel(root)
+    pulse_delay_window.geometry('250x150')
+
+    pulse_scale = tk.Scale(pulse_delay_window, orient='vertical', from_=10000, to=0)
+    pulse_scale.set(half_period_ms)
+    pulse_scale.pack(anchor=CENTER)
+
+    button = tk.Button(pulse_delay_window, text="Set Pulse Speed", command=set_pulse)   
+    button.pack(anchor=CENTER)
+
+def brightness():
+    global brightnessWindow
+    global scale
+
+    brightnessWindow = tk.Toplevel(root)
+    brightnessWindow.geometry('250x150')
+
+    colors = lifxlan.get_color_all_lights()
+    for bulb in colors:
+        color = bulb.get_color()
+    scale = tk.Scale(brightnessWindow, orient='vertical', from_=65535, to=0)
+    scale.set(int(color[2]))
+    scale.pack(anchor=CENTER)
+
+    button = tk.Button(brightnessWindow, text="Set Brightness", command=set_brightness)   
+    button.pack(anchor=CENTER)
+
+def reset():
+    global high_traffic
+    global medium_traffic
+    global low_traffic
+    global half_period_ms
+
+    high_traffic = [65535, 65535, 65535, 3500]
+    medium_traffic = [6500, 65535, 65535, 3500]
+    low_traffic = [16173, 65535, 65535, 3500]
+    half_period_ms = 2500
+
+    b1.configure(bg='red')
+    b2.configure(bg='orange')
+    b3.configure(bg='green')    
+
 if __name__ == "__main__":
     global lifxlan
+    global high_traffic
+    global medium_traffic
+    global low_traffic
+    global half_period_ms
+
+    half_period_ms = 2500
+    high_traffic = RED
+    medium_traffic = ORANGE
+    low_traffic = GREEN
 
     lifxlan = LifxLAN()
     lifxlan.set_power_all_lights("on", rapid=True)
@@ -214,7 +382,32 @@ if __name__ == "__main__":
 
             mac_address = clients[choice]
             os.system('clear')
+            print('Please configure your settings in the pop-up window. Press confirm to confirm your settings')
 
+
+            root = tk.Tk()
+            root.geometry("250x500")
+            root.title("Spiderweb")
+            b1 = tk.Button(root, text='Set High Traffic Color', bg='red', command=high, height=2, width=20)
+            b1.pack(side=TOP,pady=(10,0))
+            b2 = tk.Button(root, text='Set Medium Traffic Color', bg='orange', command=med, height=2, width=20)
+            b2.pack(side=TOP)
+            b3 = Button(root, text='Set Low Traffic Color', bg='green', command=low, height=2, width=20)
+            b3.pack(side=TOP)
+
+            b5 = tk.Button(root, text='Brightness', command=brightness, height=2, width=20)
+            b5.pack(side=TOP, pady=(40,0))
+            b6 = tk.Button(root, text='Pulse Delay', command=pulse_delay, height=2, width=20)
+            b6.pack(side=TOP)
+
+            b7 = tk.Button(root, text='Reset', command=reset, height=2, width=20)
+            b7.pack(side=BOTTOM)
+
+            b4 = tk.Button(root, text='Confirm', command=confirm, height=2, width=20)
+            b4.pack(side=BOTTOM,pady=(0,10))
+            root.mainloop()
+
+            os.system('clear')
             print('For the next 1 minute, this device will be collecting data in order to create a baseline to classify the '
                   'data being received')
             print(' ')
