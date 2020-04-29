@@ -149,12 +149,12 @@ def update_database():
             db.add(mac, vendor)
         db.finish()
 
-def rgb_to_hsv(r, g, b):
-    r = float(r)
-    g = float(g)
-    b = float(b)
-    high = max(r, g, b)
-    low = min(r, g, b)
+def rgb_to_hsv(red, green, blue):
+    red = float(red)
+    green = float(green)
+    blue = float(blue)
+    high = max(red, green, blue)
+    low = min(red, green, blue)
     h, s, v = high, high, high
 
     d = high - low
@@ -164,12 +164,11 @@ def rgb_to_hsv(r, g, b):
         h = 0.0
     else:
         h = {
-            r: (g - b) / d + (6 if g < b else 0),
-            g: (b - r) / d + 2,
-            b: (r - g) / d + 4,
+            red: (green - blue) / d + (6 if green < blue else 0),
+            green: (blue - red) / d + 2,
+            blue: (red - green) / d + 4,
         }[high]
         h /= 6
-
     return h, s, v
 
 def high():
@@ -297,9 +296,9 @@ def reset():
     global low_traffic
     global half_period_ms
 
-    high_traffic = RED
-    medium_traffic = ORANGE
-    low_traffic = GREEN
+    high_traffic = [65535, 65535, 65535, 3500]
+    medium_traffic = [6500, 65535, 65535, 3500]
+    low_traffic = [16173, 65535, 65535, 3500]
     half_period_ms = 2500
 
     b1.configure(bg='red')
