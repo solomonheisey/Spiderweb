@@ -100,10 +100,8 @@ def light_control():
             breathe(low_traffic)
 
 def breathe(color):
-    half_period_ms = 2500
     duration_secs = counter
     time_expired = False
-    
     start_time = time.time()
     while not time_expired:
         dim = list(copy.copy(color))
@@ -122,6 +120,7 @@ def breathe(color):
             time_expired = True
                
 classifyingAverage = 0
+
 # sniffs traffic for 1 minute to gather a baseline
 def baseline(mac_address):
     global classifyingAverage
@@ -149,8 +148,6 @@ def update_database():
             vendor = line[1]
             db.add(mac, vendor)
         db.finish()
-
-
 
 def rgb_to_hsv(r, g, b):
     r = float(r)
@@ -243,22 +240,39 @@ def scale(v):
     global variable 
     variable = v
 
+def pulse_scale(v):
+    global pulse_variable 
+    pulse_variable = v
+
 def set_brightness():
-
     val = scale.get()
-
     WHITE[2] = val
-
     low_traffic[2] = val
     medium_traffic[2] = val
     high_traffic[2] = val
-
-
-
-
-
-    brightnessWindow.destroy()
+    brightnessWindow.destroy()  
     lifxlan.set_color_all_lights(WHITE, duration=0, rapid=False)
+
+def set_pulse():
+    global half_period_ms
+    val = pulse_scale.get()
+    half_period_ms = val
+    pulse_delay_window.destroy()
+    breathe(WHITE)
+
+def pulse_delay():
+    global pulse_delay_window
+    global pulse_scale
+
+    pulse_delay_window = tk.Toplevel(root)
+    pulse_delay_window.geometry('250x150')
+
+    pulse_scale = tk.Scale(pulse_delay_window, orient='vertical', from_=10000, to=0)
+    pulse_scale.set(half_period_ms)
+    pulse_scale.pack(anchor=CENTER)
+
+    button = tk.Button(pulse_delay_window, text="Set Pulse Speed", command=set_pulse)   
+    button.pack(anchor=CENTER)
 
 def brightness():
     global brightnessWindow
@@ -278,9 +292,15 @@ def brightness():
     button.pack(anchor=CENTER)
 
 def reset():
+    global high_traffic
+    global medium_traffic
+    global low_traffic
+    global half_period_ms
+
     high_traffic = RED
     medium_traffic = ORANGE
     low_traffic = GREEN
+    half_period_ms = 2500
 
     b1.configure(bg='red')
     b2.configure(bg='orange')
@@ -291,7 +311,9 @@ if __name__ == "__main__":
     global high_traffic
     global medium_traffic
     global low_traffic
+    global half_period_ms
 
+    half_period_ms = 2500
     high_traffic = RED
     medium_traffic = ORANGE
     low_traffic = GREEN
@@ -361,11 +383,6 @@ if __name__ == "__main__":
 
             mac_address = clients[choice]
             os.system('clear')
-
-            print('For the next 1 minute, this device will be collecting data in order to create a baseline to classify the '
-                  'data being received')
-            print(' ')
-            os.system('clear')
             print('Please configure your settings in the pop-up window. Press confirm to confirm your settings')
 
 
@@ -381,7 +398,7 @@ if __name__ == "__main__":
 
             b5 = tk.Button(root, text='Brightness', command=brightness, height=2, width=20)
             b5.pack(side=TOP, pady=(40,0))
-            b6 = tk.Button(root, text='Pulse Delay', height=2, width=20)
+            b6 = tk.Button(root, text='Pulse Delay', command=pulse_delay, height=2, width=20)
             b6.pack(side=TOP)
 
             b7 = tk.Button(root, text='Reset', command=reset, height=2, width=20)
@@ -390,6 +407,11 @@ if __name__ == "__main__":
             b4 = tk.Button(root, text='Confirm', command=confirm, height=2, width=20)
             b4.pack(side=BOTTOM,pady=(0,10))
             root.mainloop()
+
+            os.system('clear')
+            print('For the next 1 minute, this device will be collecting data in order to create a baseline to classify the '
+                  'data being received')
+            print(' ')
 
     	# gathers data from given MAC address for 1 minute and calculates average by also removing outliers
             baseline(mac_address) 
