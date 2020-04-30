@@ -56,9 +56,10 @@ def pkt_callback(pkt):
     packets.append(len(pkt))
 
 def phase_2(pkt):
-     packets_2 = []
      global counter
      global average
+
+     packets_2 = []
      packets_2.append(pkt)
      tempSum = 0
      average = 0
@@ -66,7 +67,6 @@ def phase_2(pkt):
          print('{} -> {}'.format(pkt.addr2,pkt.addr1))
          print("Packet Size: {} bytes".format(len(packets_2[x])))
          tempSum += len(packets_2[x])
-     # Creates an average
      average = tempSum / len(packets_2)  
      light_control()
 
@@ -120,7 +120,6 @@ def breathe(color):
             time_expired = True
                
 classifyingAverage = 0
-
 # sniffs traffic for 1 minute to gather a baseline
 def baseline(mac_address):
     global classifyingAverage
@@ -173,62 +172,56 @@ def rgb_to_hsv(red, green, blue):
 
 def high():
     global high_traffic
+
     clr = colorchooser.askcolor(parent=root)
     b1.configure(bg=clr[1])
     temp =  str(clr[1]).lstrip('#')
     RGB = tuple(int(temp[i:i+2], 16) for i in (0, 2, 4))
     hsv = rgb_to_hsv(RGB[0] / 255.0, RGB[1] / 255.0, RGB[2] / 255.0)
-
     bulbHSBK = [hsv[0] * 65535.0,hsv[1] * 65535.0,hsv[2] * 65535.0,3500]
     gCycleHue = bulbHSBK[0]
     gCycleSaturation = bulbHSBK[1]
     gCycleBrightness = bulbHSBK[2]
-
     high_traffic[0] = bulbHSBK[0]
     high_traffic[1] = bulbHSBK[1]
     high_traffic[2] = bulbHSBK[2]
     high_traffic[3] = bulbHSBK[3]
-
     lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
 
 def med():
     global medium_traffic
+
     clr = colorchooser.askcolor(parent=root)
     b2.configure(bg=clr[1])
     temp =  str(clr[1]).lstrip('#')
     RGB = tuple(int(temp[i:i+2], 16) for i in (0, 2, 4))
     hsv = rgb_to_hsv(RGB[0] / 255.0, RGB[1] / 255.0, RGB[2] / 255.0)
-
     bulbHSBK = [hsv[0] * 65535.0,hsv[1] * 65535.0,hsv[2] * 65535.0,3500]
     gCycleHue = bulbHSBK[0]
     gCycleSaturation = bulbHSBK[1]
     gCycleBrightness = bulbHSBK[2]
-    
     medium_traffic[0] = bulbHSBK[0]
     medium_traffic[1] = bulbHSBK[1]
     medium_traffic[2] = bulbHSBK[2]
     medium_traffic[3] = bulbHSBK[3]
-
     lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
 
 def low():
     global low_traffic
+
     clr = colorchooser.askcolor(parent=root)
     b3.configure(bg=clr[1])
     temp =  str(clr[1]).lstrip('#')
     RGB = tuple(int(temp[i:i+2], 16) for i in (0, 2, 4))
     hsv = rgb_to_hsv(RGB[0] / 255.0, RGB[1] / 255.0, RGB[2] / 255.0)
-
     bulbHSBK = [hsv[0] * 65535.0,hsv[1] * 65535.0,hsv[2] * 65535.0,3500]
     gCycleHue = bulbHSBK[0]
     gCycleSaturation = bulbHSBK[1]
     gCycleBrightness = bulbHSBK[2]
-    
     low_traffic[0] = bulbHSBK[0]
     low_traffic[1] = bulbHSBK[1]
     low_traffic[2] = bulbHSBK[2]
     low_traffic[3] = bulbHSBK[3]
-
     lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
 
 def confirm():
@@ -244,7 +237,8 @@ def pulse_scale(v):
     pulse_variable = v
 
 def set_brightness():
-    val = scale.get()
+    decimal = int(scale.get()) / 100.0
+    val = decimal * 65535
     WHITE[2] = val
     low_traffic[2] = val
     medium_traffic[2] = val
@@ -283,8 +277,8 @@ def brightness():
     colors = lifxlan.get_color_all_lights()
     for bulb in colors:
         color = bulb.get_color()
-    scale = tk.Scale(brightnessWindow, orient='vertical', from_=65535, to=0)
-    scale.set(int(color[2]))
+    scale = tk.Scale(brightnessWindow, orient='vertical', from_=100, to=0)
+    scale.set(int(((int(color[2])/65535.0)) * 100))
     scale.pack(anchor=CENTER)
 
     button = tk.Button(brightnessWindow, text="Set Brightness", command=set_brightness)   
@@ -300,7 +294,6 @@ def reset():
     medium_traffic = [6500, 65535, 65535, 3500]
     low_traffic = [16173, 65535, 65535, 3500]
     half_period_ms = 2500
-
     b1.configure(bg='red')
     b2.configure(bg='orange')
     b3.configure(bg='green')    
@@ -371,12 +364,12 @@ if __name__ == "__main__":
 
     	# if user entered choice is not valid
             while not valid: 
+                print(" ")
                 choice = raw_input("Which device number do you want to sniff data from: ")
                 choice = int(re.search(r'\d+', choice).group())
                 choice -= 1
                 if (choice >= (len(clients))) or (choice < 0):
                     print("Invalid choice")
-                    print(" ")
                 else:
                     valid = True
 
