@@ -22,6 +22,7 @@ import tkinter as tk
 clients = []
 vendors = []
 
+
 # Iterates through all 14 channels on 2.4ghz band in thread
 def channel_scanner(iface):
     thread = threading.currentThread()
@@ -32,6 +33,7 @@ def channel_scanner(iface):
         n += 1
         if n == 11:
             n = 1
+
 
 def phase_1(pkt):
     if pkt.haslayer(Dot11):
@@ -50,10 +52,12 @@ def phase_1(pkt):
                 clients.append(pkt.addr2)
                 vendors.append(match)
 
+
 packets = []
 def pkt_callback(pkt):
     print('{} Bytes'.format(len(pkt)))
     packets.append(len(pkt))
+
 
 def phase_2(pkt):
      global counter
@@ -69,6 +73,7 @@ def phase_2(pkt):
          tempSum += len(packets_2[x])
      average = tempSum / len(packets_2)  
      light_control()
+
 
 counter = off_counter = 0
 def light_control():
@@ -99,6 +104,7 @@ def light_control():
             print(' ')
             breathe(low_traffic)
 
+
 def breathe(color):
     duration_secs = counter
     time_expired = False
@@ -120,6 +126,8 @@ def breathe(color):
             time_expired = True
                
 classifyingAverage = 0
+
+
 # sniffs traffic for 1 minute to gather a baseline
 def baseline(mac_address):
     global classifyingAverage
@@ -136,6 +144,7 @@ def baseline(mac_address):
         classifyingAverage = numpy.mean(newList, axis=0)
     print 'Classifying Average: {}'.format(classifyingAverage)
 
+
 def update_database():
     fn = "mac_address_db"
     db = cdb.cdbmake("../lib/" + fn, "../lib/" + fn + ".tmp")
@@ -147,6 +156,7 @@ def update_database():
             vendor = line[1]
             db.add(mac, vendor)
         db.finish()
+
 
 def rgb_to_hsv(red, green, blue):
     red = float(red)
@@ -170,6 +180,7 @@ def rgb_to_hsv(red, green, blue):
         h /= 6
     return h, s, v
 
+
 def high():
     global high_traffic
 
@@ -187,6 +198,7 @@ def high():
     high_traffic[2] = bulbHSBK[2]
     high_traffic[3] = bulbHSBK[3]
     lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
+
 
 def med():
     global medium_traffic
@@ -206,6 +218,7 @@ def med():
     medium_traffic[3] = bulbHSBK[3]
     lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
 
+
 def low():
     global low_traffic
 
@@ -224,17 +237,21 @@ def low():
     low_traffic[3] = bulbHSBK[3]
     lifxlan.set_color_all_lights(bulbHSBK, duration=0, rapid=False)
 
+
 def confirm():
     breathe(WHITE)
     root.destroy()
+
 
 def scale(v):
     global variable 
     variable = v
 
+
 def pulse_scale(v):
     global pulse_variable 
     pulse_variable = v
+
 
 def set_brightness():
     decimal = int(scale.get()) / 100.0
@@ -246,12 +263,14 @@ def set_brightness():
     brightnessWindow.destroy()  
     lifxlan.set_color_all_lights(WHITE, duration=0, rapid=False)
 
+
 def set_pulse():
     global half_period_ms
     val = pulse_scale.get()
     half_period_ms = val
     pulse_delay_window.destroy()
     breathe(WHITE)
+
 
 def pulse_delay():
     global pulse_delay_window
@@ -266,6 +285,7 @@ def pulse_delay():
 
     button = tk.Button(pulse_delay_window, text="Set Pulse Speed", command=set_pulse)   
     button.pack(anchor=CENTER)
+
 
 def brightness():
     global brightnessWindow
@@ -284,6 +304,7 @@ def brightness():
     button = tk.Button(brightnessWindow, text="Set Brightness", command=set_brightness)   
     button.pack(anchor=CENTER)
 
+
 def reset():
     global high_traffic
     global medium_traffic
@@ -297,6 +318,7 @@ def reset():
     b1.configure(bg='red')
     b2.configure(bg='orange')
     b3.configure(bg='green')    
+
 
 if __name__ == "__main__":
     global lifxlan
@@ -343,11 +365,11 @@ if __name__ == "__main__":
             print('*If you are having trouble locating your device be sure that it is connected to a 2.4ghz wifi channel*')
             print(dash)
 
-    	# 1st table with all nearby MAC addresses
+            # 1st table with all nearby MAC addresses
             print("{:<6s}{:>15s}{:>16s}".format("Number", "MAC Address", "Vendor ID")) 
             print(dash)
 
-    	# sniffs available MAC addresses until user types "q"
+            # sniffs available MAC addresses until user types "q"
             sniff(iface=interface, prn=phase_1, stop_filter= lambda x: keyboard.is_pressed('q')) 
 
             os.system('clear')
@@ -362,7 +384,7 @@ if __name__ == "__main__":
             valid = False
             choice = ""
 
-    	# if user entered choice is not valid
+            # if user entered choice is not valid
             while not valid: 
                 print(" ")
                 choice = raw_input("Which device number do you want to sniff data from: ")
@@ -376,7 +398,6 @@ if __name__ == "__main__":
             mac_address = clients[choice]
             os.system('clear')
             print('Please configure your settings in the pop-up window. Press confirm to confirm your settings')
-
 
             root = tk.Tk()
             root.geometry("250x500")
@@ -405,7 +426,7 @@ if __name__ == "__main__":
                   'data being received')
             print(' ')
 
-    	# gathers data from given MAC address for 1 minute and calculates average by also removing outliers
+            # gathers data from given MAC address for 1 minute and calculates average by also removing outliers
             baseline(mac_address) 
             os.system('clear')
             print('Data collection complete!')
