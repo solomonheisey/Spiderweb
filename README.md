@@ -19,3 +19,7 @@ $ pip install -r install/requirements.txt
 $ sudo python src/application/Spiderweb.py
 ```
 Needs to be run with sudo because we're doing system-level stuff. For some reason scapy won't work within a virtual environment.
+
+## Author
+
+* Solomon Heisey
